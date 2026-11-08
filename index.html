@@ -67,7 +67,13 @@
   <p class="disclaimer">本站資料僅供參考，不構成投資建議。紀念品以各公司公告為準，請於最後買進日前自行確認。</p>
 </main>
 
-<aside class="sim" id="sim" aria-label="家庭人頭矩陣與自選包試算">
+<aside class="sim sticky-bar collapsed" id="sticky-bar" aria-label="家庭人頭矩陣與自選包試算">
+  <div class="sim-head">
+    <span class="sim-title" id="simMini">🧮 試算與匯出工具</span>
+    <div class="sim-stats" id="simStats"></div>
+    <button id="selectAllMini" type="button" class="mini-only">⚡ 全選目前篩選</button>
+    <button id="toggle-sticky-bar" type="button" aria-expanded="false">🔼 展開工具列</button>
+  </div>
   <div class="sim-row">
     <strong>👨‍👩‍👧‍👦 家庭戶數</strong>
     <div class="households" id="households"></div>
@@ -77,7 +83,6 @@
     <button id="export-ics" type="button" class="btn-ics">📅 匯出行事曆 (.ics)</button>
     <button id="copy-checklist" class="btn-checklist">📋 複製 LINE / Notion 清單</button>
   </div>
-  <div class="sim-stats" id="simStats"></div>
 </aside>
 <script src="./assets/app.js"></script>
 </body>

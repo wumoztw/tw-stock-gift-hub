@@ -70,6 +70,17 @@ class ProjectTest(unittest.TestCase):
         if shutil.which("node"):
             subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
 
+    def test_collapsible_sticky_bar(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        js = (ROOT / "assets/app.js").read_text(encoding="utf-8")
+        css = (ROOT / "assets/styles.css").read_text(encoding="utf-8")
+        self.assertIn("toggle-sticky-bar", html)
+        for text in (html, js, css):
+            self.assertIn("collapsed", text)
+        self.assertIn("tw_gift_bar_collapsed", js)
+        if shutil.which("node"):
+            subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
+
     def test_html_wiring(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("./assets/app.js", html)

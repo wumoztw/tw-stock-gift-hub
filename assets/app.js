@@ -204,9 +204,26 @@ function renderSim() {
   const val = picks.reduce((s, g) => s + (g.est_value_2026 || 0), 0) * n;
   $('households').innerHTML = Array.from({ length: 8 }, (_, i) =>
     `<button type="button" data-hh="${i + 1}" class="${i + 1 === n ? 'active' : ''}">${i + 1} 戶</button>`).join('');
-  $('simStats').innerHTML = `<span>已選 <b>${picks.length}</b> 檔</span><span>總建倉本金 <b>${fmt(cost)}</b> 元</span>`
-    + `<span>首年可領價值 <b>${fmt(val)}</b> 元</span><span>首年淨賺 <b class="net">${fmt(val - cost)}</b> 元</span>`
-    + `<span>次年起每年免成本白領 <b>${fmt(val)}</b> 元</span>`;
+  const net = val - cost;
+  $('simStats').innerHTML = `<span>已選 <b>${picks.length}</b> 檔</span>`
+    + `<span class="mini-net">首年淨賺 <b class="net">${net >= 0 ? '+' : '-'}$${fmt(Math.abs(net))}</b> 元</span>`
+    + `<span class="full">總建倉本金 <b>${fmt(cost)}</b> 元</span><span class="full">首年可領價值 <b>${fmt(val)}</b> 元</span>`;
+}
+
+const BAR_KEY = 'tw_gift_bar_collapsed';
+
+function setBarCollapsed(collapsed, save = true) {
+  const bar = $('sticky-bar');
+  bar.classList.toggle('collapsed', collapsed);
+  const t = $('toggle-sticky-bar');
+  t.textContent = collapsed ? '🔼 展開工具列' : '🔽 收合 / 隱藏';
+  t.setAttribute('aria-expanded', String(!collapsed));
+  if (save) localStorage.setItem(BAR_KEY, collapsed ? '1' : '0');
+}
+
+function initBar() {
+  const saved = localStorage.getItem(BAR_KEY);
+  setBarCollapsed(state.picked.size === 0 || saved === null ? state.picked.size === 0 : saved === '1', false);
 }
 
 function persist() {
@@ -396,6 +413,7 @@ function selectMatched() {
     .forEach((g) => state.picked.add(g.code));
   persist();
   renderGrid();
+  setBarCollapsed(false);
 }
 
 function clearPortfolio() {
@@ -445,7 +463,13 @@ function bind() {
     const b = e.target.closest('[data-hh]');
     if (b) { state.households = Number(b.dataset.hh); persist(); renderSim(); }
   });
-  $('selectAll').addEventListener('click', () => { visible().forEach((g) => state.picked.add(g.code)); persist(); renderGrid(); });
+  const selectAllVisible = () => { visible().forEach((g) => state.picked.add(g.code)); persist(); renderGrid(); };
+  $('selectAll').addEventListener('click', selectAllVisible);
+  $('selectAllMini').addEventListener('click', () => { selectAllVisible(); setBarCollapsed(false); });
+  $('toggle-sticky-bar').addEventListener('click', () => setBarCollapsed(!$('sticky-bar').classList.contains('collapsed')));
+  $('sticky-bar').addEventListener('click', (e) => {
+    if ($('sticky-bar').classList.contains('collapsed') && !e.target.closest('button')) setBarCollapsed(false);
+  });
   $('clearAll').addEventListener('click', () => { state.picked.clear(); persist(); renderGrid(); });
   $('exportCsv').addEventListener('click', exportCsv);
   $('export-ics').addEventListener('click', exportIcs);
@@ -466,6 +490,7 @@ async function init() {
   renderAgents();
   renderQuick();
   bind();
+  initBar();
   renderGrid();
   if (state.portfolio) matchPortfolio();
 }
