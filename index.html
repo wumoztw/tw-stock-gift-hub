@@ -68,11 +68,15 @@
 </main>
 
 <aside class="sim sticky-bar collapsed" id="sticky-bar" aria-label="家庭人頭矩陣與自選包試算">
+  <div class="sticky-bar-pill" id="sticky-pill">
+    <span class="pill-text">🧮 已選 <b id="pill-selected-count">0</b> 檔 (<b id="pill-profit" class="profit-text">+$0</b>)</span>
+    <button id="pill-select-all" type="button" class="pill-btn">⚡ 全選</button>
+    <button id="expand-sticky-bar" type="button" class="pill-btn pill-btn-primary">🔼 展開</button>
+  </div>
   <div class="sim-head">
     <span class="sim-title" id="simMini">🧮 試算與匯出工具</span>
     <div class="sim-stats" id="simStats"></div>
-    <button id="selectAllMini" type="button" class="mini-only">⚡ 全選目前篩選</button>
-    <button id="toggle-sticky-bar" type="button" aria-expanded="false">🔼 展開工具列</button>
+    <button id="toggle-sticky-bar" type="button" aria-expanded="false">🔽 收合</button>
   </div>
   <div class="sim-row">
     <strong>👨‍👩‍👧‍👦 家庭戶數</strong>

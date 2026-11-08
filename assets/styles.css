@@ -53,14 +53,7 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inh
 .sim-title{font-weight:700}
 .sim-head #toggle-sticky-bar{margin-left:auto;font-weight:700}
 .sim-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
-.mini-only{display:none}
-.sim.collapsed{left:auto;right:20px;bottom:20px;width:auto;max-width:92vw;border-radius:999px;padding:6px 12px}
-.sim.collapsed .sim-row{display:none}
-.sim.collapsed .mini-only{display:inline-block}
-.sim.collapsed .sim-head{flex-wrap:nowrap;gap:8px}
-.sim.collapsed .sim-head #toggle-sticky-bar{margin-left:0}
-.sim.collapsed .sim-stats .full{display:none}
-@media(max-width:600px){.sim.collapsed .sim-head{flex-wrap:wrap;justify-content:center}.sim.collapsed .sim-title{display:none}}
+.sticky-bar-pill{display:none}
 .households{display:flex;gap:4px}
 .households button{padding:2px 10px;border-radius:8px}
 .households button.active{background:#16A34A;color:#fff;border-color:#16A34A}
@@ -92,3 +85,27 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inh
 .btn-tdcc-egift{background:#e0f2fe;color:#075985;border:1px solid #7dd3fc}
 .evote-row{font-size:.85rem;color:#92400e;margin:4px 0}
 .btn-evote{display:inline-block;margin-left:6px;font-size:.8rem;padding:2px 10px;border-radius:999px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;text-decoration:none}
+
+html,body{overflow-x:hidden;max-width:100vw}
+.sticky-bar.collapsed{left:auto;right:16px;bottom:16px;width:auto;max-width:calc(100vw - 24px);padding:6px 12px;border-radius:999px;box-sizing:border-box}
+.sticky-bar.collapsed .sim-head,.sticky-bar.collapsed .sim-row{display:none}
+.sticky-bar.collapsed .sticky-bar-pill{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;font-size:13px}
+.pill-btn{padding:4px 10px;font-size:12px;white-space:nowrap}
+.pill-btn-primary{background:#16A34A;color:#fff;border-color:#16A34A}
+.profit-text{color:#16A34A}
+@media(max-width:640px){
+ .sticky-bar.collapsed{left:12px;right:12px;bottom:10px;width:auto;max-width:calc(100vw - 24px);padding:6px 12px;border-radius:999px;box-sizing:border-box}
+ .sticky-bar.collapsed .sticky-bar-pill{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap;width:100%;font-size:13px}
+ .sticky-bar.collapsed .pill-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+ .sticky-bar:not(.collapsed){left:8px;right:8px;bottom:8px;padding:10px 12px;border-radius:16px;max-height:75vh;overflow-y:auto;box-sizing:border-box}
+ .sticky-bar:not(.collapsed) .sim-head{flex-wrap:nowrap;font-size:12px;gap:6px}
+ .sticky-bar:not(.collapsed) .sim-title{display:none}
+ .sticky-bar:not(.collapsed) .sim-stats{font-size:12px;gap:2px 10px;flex:1;min-width:0}
+ .sticky-bar:not(.collapsed) .sim-head #toggle-sticky-bar{flex:none;white-space:nowrap;font-size:12px;padding:4px 10px}
+ .sticky-bar:not(.collapsed) .sim-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ .sticky-bar:not(.collapsed) .sim-row strong,.sticky-bar:not(.collapsed) .households{grid-column:1/-1}
+ .sticky-bar:not(.collapsed) .households{flex-wrap:wrap}
+ .households button{padding:4px 8px;font-size:12px}
+ .sticky-bar:not(.collapsed) .sim-row>button{font-size:12px;padding:6px 8px}
+ .grid,.card{grid-template-columns:1fr;max-width:100%}
+}

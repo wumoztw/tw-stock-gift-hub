@@ -205,6 +205,8 @@ function renderSim() {
   $('households').innerHTML = Array.from({ length: 8 }, (_, i) =>
     `<button type="button" data-hh="${i + 1}" class="${i + 1 === n ? 'active' : ''}">${i + 1} 戶</button>`).join('');
   const net = val - cost;
+  $('pill-selected-count').textContent = String(picks.length);
+  $('pill-profit').textContent = `${net >= 0 ? '+' : '-'}$${fmt(Math.abs(net))}`;
   $('simStats').innerHTML = `<span>已選 <b>${picks.length}</b> 檔</span>`
     + `<span class="mini-net">首年淨賺 <b class="net">${net >= 0 ? '+' : '-'}$${fmt(Math.abs(net))}</b> 元</span>`
     + `<span class="full">總建倉本金 <b>${fmt(cost)}</b> 元</span><span class="full">首年可領價值 <b>${fmt(val)}</b> 元</span>`;
@@ -216,7 +218,7 @@ function setBarCollapsed(collapsed, save = true) {
   const bar = $('sticky-bar');
   bar.classList.toggle('collapsed', collapsed);
   const t = $('toggle-sticky-bar');
-  t.textContent = collapsed ? '🔼 展開工具列' : '🔽 收合 / 隱藏';
+  t.textContent = '🔽 收合';
   t.setAttribute('aria-expanded', String(!collapsed));
   if (save) localStorage.setItem(BAR_KEY, collapsed ? '1' : '0');
 }
@@ -465,7 +467,8 @@ function bind() {
   });
   const selectAllVisible = () => { visible().forEach((g) => state.picked.add(g.code)); persist(); renderGrid(); };
   $('selectAll').addEventListener('click', selectAllVisible);
-  $('selectAllMini').addEventListener('click', () => { selectAllVisible(); setBarCollapsed(false); });
+  $('pill-select-all').addEventListener('click', () => { selectAllVisible(); setBarCollapsed(false); });
+  $('expand-sticky-bar').addEventListener('click', () => setBarCollapsed(false));
   $('toggle-sticky-bar').addEventListener('click', () => setBarCollapsed(!$('sticky-bar').classList.contains('collapsed')));
   $('sticky-bar').addEventListener('click', (e) => {
     if ($('sticky-bar').classList.contains('collapsed') && !e.target.closest('button')) setBarCollapsed(false);

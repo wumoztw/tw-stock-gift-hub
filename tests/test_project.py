@@ -81,6 +81,16 @@ class ProjectTest(unittest.TestCase):
         if shutil.which("node"):
             subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
 
+    def test_mobile_rwd_sticky_pill(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        css = (ROOT / "assets/styles.css").read_text(encoding="utf-8")
+        for i in ("sticky-pill", "pill-selected-count", "pill-profit", "pill-select-all", "expand-sticky-bar"):
+            self.assertIn(i, html)
+        self.assertIn("@media(max-width:640px)", css)
+        self.assertIn("max-width:calc(100vw - 24px)", css)
+        self.assertIn("overflow-x:hidden", css)
+        self.assertIn("grid-template-columns:1fr 1fr", css)
+
     def test_html_wiring(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("./assets/app.js", html)
