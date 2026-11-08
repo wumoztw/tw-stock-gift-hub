@@ -91,6 +91,11 @@ class ProjectTest(unittest.TestCase):
         self.assertIn("overflow-x:hidden", css)
         self.assertIn("grid-template-columns:1fr 1fr", css)
 
+    def test_hero_tdcc_alignment(self):
+        css = (ROOT / "assets/styles.css").read_text(encoding="utf-8")
+        self.assertRegex(css, r"\.hero\{[^}]*max-width:1200px")
+        self.assertRegex(css, r"\.tdcc-links\{[^}]*justify-content:center")
+
     def test_beginner_guide_and_business_models(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         for i in ("beginner-guide", "btn-open-guide", "tab-intro", "tab-steps", "tab-pickup", "tab-rules", "tab-business",

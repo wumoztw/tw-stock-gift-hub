@@ -2,7 +2,7 @@
 *{box-sizing:border-box}
 body{margin:0;padding-bottom:120px;color:var(--text);background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;
  font-family:Inter,"Noto Sans TC",system-ui,-apple-system,"Microsoft JhengHei",sans-serif;line-height:1.6}
-.hero{text-align:center;padding:40px 16px 12px}
+.hero{max-width:1200px;margin:0 auto;text-align:center;padding:40px 16px 8px}
 .hero h1{margin:0 0 8px;font-size:clamp(1.6rem,4vw,2.4rem)}
 .hero p{margin:4px 0;color:var(--muted)}
 .updated{font-size:.85rem}
@@ -79,7 +79,7 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inh
 .portfolio-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .portfolio-summary{margin:8px 0 0;font-weight:600}
 
-.tdcc-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tdcc-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;width:100%;margin:12px 0 4px}
 .btn-tdcc-evote,.btn-tdcc-egift{display:inline-block;font-size:.85rem;padding:4px 14px;border-radius:999px;text-decoration:none;font-weight:600}
 .btn-tdcc-evote{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
 .btn-tdcc-egift{background:#e0f2fe;color:#075985;border:1px solid #7dd3fc}
