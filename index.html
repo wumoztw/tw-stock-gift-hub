@@ -19,9 +19,13 @@
   <section class="filters">
     <input id="search" type="search" placeholder="搜尋代號、公司、紀念品（7-11、全家、米、皂）" aria-label="搜尋">
     <div class="pills" id="pills"></div>
+    <div class="pills" id="quick-filters"></div>
     <div class="selects">
       <label>股務代理
         <select id="agent"></select>
+      </label>
+      <label>📍 北部領取生活圈篩選
+        <select id="region-filter"></select>
       </label>
       <label>股價門檻
         <select id="priceCap">
@@ -56,6 +60,7 @@
     <button id="clearAll" type="button" class="ghost">清空</button>
     <button id="exportCsv" type="button" class="primary">📥 匯出 CSV 購買清單</button>
     <button id="export-ics" type="button" class="btn-ics">📅 匯出行事曆 (.ics)</button>
+    <button id="copy-checklist" class="btn-checklist">📋 複製 LINE / Notion 清單</button>
   </div>
   <div class="sim-stats" id="simStats"></div>
 </aside>

@@ -1,10 +1,48 @@
 'use strict';
 const TAIPEI_STATION_AGENTS = ['中國信託', '福邦證券', '凱基證券', '永豐金證券'];
 const TAIPEI_KEY = '__taipei__';
+const AGENT_LOCATIONS = {
+  '中國信託': { area: '北車商圈', mrt: '北車/台大醫院站', addr: '台北市中正區重慶南路一段83號' },
+  '福邦證券': { area: '北車商圈', mrt: '台北車站M8出口', addr: '台北市中正區忠孝西路一段6號6樓' },
+  '凱基證券': { area: '北車商圈', mrt: '台北車站Z10出口', addr: '台北市中正區重慶南路一段2號5樓' },
+  '永豐金證券': { area: '北車商圈', mrt: '北車/西門站', addr: '台北市中正區博愛路17號3樓' },
+  '第一金證券': { area: '北車商圈', mrt: '北車/台大醫院站', addr: '台北市中正區長安東路一段/重慶南路' },
+  '新光證券': { area: '北車商圈', mrt: '台北車站Z10出口', addr: '台北市中正區重慶南路一段66之1號11樓' },
+  '兆豐證券': { area: '忠孝新生', mrt: '忠孝新生站2號出口', addr: '台北市中正區忠孝東路二段95號1樓' },
+  '元大證券': { area: '中山/南京', mrt: '松江南京/忠孝復興', addr: '台北市大安區敦化南路二段67號B1' },
+  '台新證券': { area: '松江南京', mrt: '松江南京站4號出口', addr: '台北市中山區建國北路一段96號B1' },
+  '群益金鼎': { area: '大安/敦南', mrt: '忠孝敦化/信義安和', addr: '台北市大安區敦化南路二段97號B2' },
+  '統一證券': { area: '南京三民', mrt: '南京三民站1號出口', addr: '台北市松山區東興路8號B1' },
+  '富邦證券': { area: '忠孝敦化', mrt: '忠孝敦化站', addr: '台北市大安區仁愛路四段169號 / 許昌街' },
+  '華南永昌': { area: '南京復興', mrt: '南京復興站', addr: '台北市松山區民生東路四段54號4樓' },
+  '康和證券': { area: '信義/市政', mrt: '市政府站2號出口', addr: '台北市信義區基隆路一段176號B1' },
+  '國票證券': { area: '中山/松江', mrt: '松江南京站', addr: '台北市中山區樂群三路128號 / 重慶北路' },
+  '宏遠證券': { area: '大安/信義', mrt: '信義安和站', addr: '台北市大安區信義路四段236號3樓' },
+  '亞東證券': { area: '板橋/新北', mrt: '府中站', addr: '新北市板橋區新站路16號13樓' },
+};
+const STATION_WALK_AGENTS = ['中國信託', '福邦證券', '凱基證券', '永豐金證券', '新光證券', '第一金證券'];
+const METRO_AGENTS = ['元大證券', '台新證券', '群益金鼎', '富邦證券', '統一證券', '兆豐證券'];
+const NORTH_WORDS = ['台北', '臺北', '新北', '基隆', '桃園', '新竹', '宜蘭', '南港', '劍潭'];
+const TAIPEI_MEETING_WORDS = ['台北', '臺北', '新北', '南港', '劍潭'];
+const TAOHSIN_WORDS = ['桃園', '新竹', '宜蘭'];
+const hasWord = (loc, words) => words.some((w) => String(loc || '').includes(w));
+const isTaipeiPhone = (p) => /^\s*(\(0?2\)|02)/.test(String(p || ''));
+const isNorthMeeting = (g) => hasWord(g.location, NORTH_WORDS);
+const isNorthPickup = (g) => Boolean(AGENT_LOCATIONS[g.agent]) || isTaipeiPhone(g.agent_phone) || isNorthMeeting(g);
+const isNorthMeetingAndTaipeiAgent = (g) => isNorthMeeting(g)
+  && (Boolean(AGENT_LOCATIONS[g.agent]) || isTaipeiPhone(g.agent_phone));
+const REGION_FILTERS = {
+  all: () => true,
+  north_all: isNorthPickup,
+  taipei_station: (g) => STATION_WALK_AGENTS.includes(g.agent),
+  taipei_metro: (g) => METRO_AGENTS.includes(g.agent),
+  meeting_taipei: (g) => hasWord(g.location, TAIPEI_MEETING_WORDS),
+  meeting_taohsin: (g) => hasWord(g.location, TAOHSIN_WORDS),
+};
 const STORE_KEY = 'twgift.picked';
 const HH_KEY = 'twgift.households';
 const state = {
-  data: [], q: '', pill: 'flip', agent: '', priceCap: 0, sort: 'roi',
+  data: [], q: '', pill: 'flip', agent: '', region: 'all', quick: '', priceCap: 0, sort: 'roi',
   picked: new Set(JSON.parse(localStorage.getItem(STORE_KEY) || '[]')),
   households: Number(localStorage.getItem(HH_KEY)) || 1,
 };
@@ -36,6 +74,8 @@ function matches(g) {
   if (state.agent === TAIPEI_KEY) {
     if (!TAIPEI_STATION_AGENTS.includes(g.agent)) return false;
   } else if (state.agent && g.agent !== state.agent) return false;
+  if (!REGION_FILTERS[state.region](g)) return false;
+  if (state.quick && !REGION_FILTERS[state.quick](g)) return false;
   if (state.priceCap && !(g.price <= state.priceCap)) return false;
   if (state.q) {
     const hay = `${g.code} ${g.name} ${g.gift_2026} ${Object.values(g.history || {}).join(' ')}`.toLowerCase();
@@ -77,6 +117,12 @@ function renderPills() {
   }).join('');
 }
 
+function renderQuick() {
+  const defs = [['north_all', '🧭 北部可領專區 (台北股代+北部開會)'], ['taipei_station', '🚇 北車步行圈順路領']];
+  $('quick-filters').innerHTML = defs.map(([id, label]) =>
+    `<button type="button" class="pill${state.quick === id ? ' active' : ''}" data-filter="${id}">${label} (${state.data.filter(REGION_FILTERS[id]).length})</button>`).join('');
+}
+
 function renderAgents() {
   const counts = {};
   state.data.forEach((g) => { counts[g.agent] = (counts[g.agent] || 0) + 1; });
@@ -88,6 +134,13 @@ function renderAgents() {
       .map(([a, n]) => `<option value="${esc(a)}">${esc(a)} (${n})</option>`),
   ];
   $('agent').innerHTML = opts.join('');
+  const regionLabels = [['all', '全部地區'], ['north_all', '🧭 全北部可領 (雙北股代總部 / 北部開會)'],
+    ['taipei_station', '🚇 台北車站重慶南路步行圈 (中信/福邦/凱基/永豐)'],
+    ['taipei_metro', '🏙️ 南京/松江/敦南商圈股代 (元大/台新/群益/富邦/統一/兆豐)'],
+    ['meeting_taipei', '🏛️ 股東會開會現場也在雙北 (台北/新北，可現場出席領)'],
+    ['meeting_taohsin', '🚄 股東會開會現場在桃竹宜 (桃園/新竹/宜蘭)']];
+  $('region-filter').innerHTML = regionLabels.map(([id, l]) =>
+    `<option value="${id}">${l} (${state.data.filter(REGION_FILTERS[id]).length})</option>`).join('');
 }
 
 function cardHtml(g) {
@@ -100,7 +153,12 @@ function cardHtml(g) {
   if (isFlip(g)) badges.push(`<span class="tag profit">🔥 首年倒賺 +$${fmt(g.net_profit_yr1)} 元 (ROI ${fmt(g.roi_pct)}%)</span>`);
   if (isCard(g)) badges.push('<span class="tag card-t">💳 超商卡/禮券</span>');
   if (g.category_2026 === '民生/日用品') badges.push('<span class="tag daily">🧼 民生/日用品</span>');
-  if (g.agent && g.agent !== '待確認') badges.push(`<span class="tag agent">🚉 ${esc(g.agent)}</span>`);
+  const loc = AGENT_LOCATIONS[g.agent];
+  if (loc) badges.push(`<span class="tag agent" title="${esc(loc.addr)}">🚉 ${esc(g.agent)} (${esc(loc.mrt)})</span>`);
+  else if (g.agent && g.agent !== '待確認') badges.push(`<span class="tag agent">🚉 ${esc(g.agent)}</span>`);
+  if (isNorthMeeting(g)) badges.push(`<span class="tag north">📍 北部開會: ${esc(g.location)}</span>`);
+  if (isNorthMeetingAndTaipeiAgent(g)) badges.push('<span class="tag north">🏛️ 北部現場也能領</span>');
+  else if (isNorthPickup(g)) badges.push('<span class="tag north">🏢 北部可領</span>');
   const picked = state.picked.has(g.code);
   return `<article class="card${picked ? ' picked' : ''}">
     <div class="card-top"><span class="title">${esc(g.code)} ${esc(g.name)}</span><span class="mkt">${esc(g.market)}</span>
@@ -147,6 +205,50 @@ function exportCsv() {
   const a = Object.assign(document.createElement('a'), { href: url, download: 'gift-buy-list.csv' });
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function buildChecklist() {
+  const n = state.households;
+  const picks = state.data.filter((g) => state.picked.has(g.code));
+  const cost = picks.reduce((t, g) => t + g.cost_1_share, 0) * n;
+  const val = picks.reduce((t, g) => t + (g.est_value_2026 || 0), 0) * n;
+  const net = val - cost;
+  const groups = new Map();
+  picks.forEach((g) => {
+    const k = g.agent || '待確認';
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(g);
+  });
+  const lines = ['🎁 【2026 股東會紀念品】北部順路領 & 零股下單檢核表',
+    `📊 已選：${picks.length} 檔｜家庭戶數：${n} 戶｜總成本：$${fmt(cost)}｜首年總禮券：$${fmt(val)}｜首年淨賺：${net >= 0 ? '+' : '-'}$${fmt(Math.abs(net))}`,
+    '━━━━━━━━━━━━━━━━━━'];
+  [...groups.entries()].sort((a, b) => b[1].length - a[1].length).forEach(([agent, items]) => {
+    const loc = AGENT_LOCATIONS[agent];
+    lines.push(`📍 【${agent}】共 ${items.length} 檔${loc ? ` (${loc.mrt}｜${loc.addr})` : ''}`);
+    const phone = items.find((g) => g.agent_phone);
+    if (phone) lines.push(`☎ ${phone.agent_phone}`);
+    items.forEach((g) => lines.push(`[ ] ${g.code} ${g.name}｜股價 $${fmt(g.price)}｜${g.gift_2026} ($${fmt(g.est_value_2026 || 0)})｜最後買進: ${g.last_buy_date}`));
+    lines.push('');
+  });
+  return lines.join('\n').trim();
+}
+
+async function copyChecklist() {
+  const btn = $('copy-checklist');
+  const text = buildChecklist();
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    const ta = Object.assign(document.createElement('textarea'), { value: text });
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand && document.execCommand('copy');
+    ta.remove();
+    if (!ok) { window.prompt('請手動複製檢核表：', text); return; }
+  }
+  const old = btn.textContent;
+  btn.textContent = '✅ 已複製到剪貼簿！';
+  setTimeout(() => { btn.textContent = old; }, 2000);
 }
 
 function parseMonthDayToDate(str) {
@@ -240,6 +342,14 @@ function openGoogleCalendar(g) {
 function bind() {
   $('search').addEventListener('input', (e) => { state.q = e.target.value.trim().toLowerCase(); renderGrid(); });
   $('agent').addEventListener('change', (e) => { state.agent = e.target.value; renderGrid(); });
+  $('region-filter').addEventListener('change', (e) => { state.region = e.target.value; renderGrid(); });
+  $('quick-filters').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-filter]');
+    if (!b) return;
+    state.quick = state.quick === b.dataset.filter ? '' : b.dataset.filter;
+    renderQuick();
+    renderGrid();
+  });
   $('priceCap').addEventListener('change', (e) => { state.priceCap = Number(e.target.value); renderGrid(); });
   $('sort').addEventListener('change', (e) => { state.sort = e.target.value; renderGrid(); });
   $('pills').addEventListener('click', (e) => {
@@ -267,6 +377,7 @@ function bind() {
   $('clearAll').addEventListener('click', () => { state.picked.clear(); persist(); renderGrid(); });
   $('exportCsv').addEventListener('click', exportCsv);
   $('export-ics').addEventListener('click', exportIcs);
+  $('copy-checklist').addEventListener('click', copyChecklist);
 }
 
 async function init() {
@@ -281,6 +392,7 @@ async function init() {
   renderKpis();
   renderPills();
   renderAgents();
+  renderQuick();
   bind();
   renderGrid();
 }

@@ -44,3 +44,9 @@ python3 -m unittest discover -s tests -p "test_*.py"
 2. Settings → Pages → Source 選 `Deploy from a branch`，分支 `main`、目錄 `/ (root)`。
 3. 等待部署完成後即可使用 `https://<user>.github.io/<repo>/`。
 4. Actions 需有寫入權限（workflow 已設定 `contents: write`）。
+
+## 北部領取專區與檢核表
+
+- 🧭 北部可領專區 / 🚇 北車步行圈順路領 膠囊，以及「📍 北部領取生活圈篩選」下拉選單；卡片顯示股代捷運出口與開會地點標籤。
+- 📋 複製 LINE / Notion 清單：依股代分組輸出含 `[ ]` 核取方塊、股代地址的純文字檢核表。
+- 股代台北據點定義於 `assets/app.js` 的 `AGENT_LOCATIONS`。

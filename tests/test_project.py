@@ -40,6 +40,15 @@ class ProjectTest(unittest.TestCase):
         for key in ["export-ics", "VCALENDAR", "VEVENT", "VALARM", "calendar.google.com", "parseMonthDayToDate"]:
             self.assertIn(key, js)
 
+    def test_north_pickup_and_checklist(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        js = (ROOT / "assets/app.js").read_text(encoding="utf-8")
+        for key in ["copy-checklist", "region-filter", "quick-filters"]:
+            self.assertIn(key, html)
+        for key in ["copy-checklist", "region-filter", "AGENT_LOCATIONS", "north_all", "taipei_station",
+                    "isNorthPickup", "isNorthMeetingAndTaipeiAgent", "navigator.clipboard.writeText"]:
+            self.assertIn(key, js)
+
     def test_html_wiring(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("./assets/app.js", html)
