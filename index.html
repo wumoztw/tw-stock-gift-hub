@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>台灣股東會紀念品情報站</title>
+<meta name="description" content="買 1 股首年回本 ROI、連 4 年發卡王、股代順路領與家庭多帳號試算">
+<link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+<header class="hero">
+  <h1>🎁 台灣股東會紀念品情報站</h1>
+  <p>買 1 股就能領的紀念品，算清楚成本、回本與順路領。資料每日自動更新。</p>
+  <p class="updated" id="updated"></p>
+</header>
+<main class="container">
+  <section class="kpis" id="kpis" aria-label="核心數據"></section>
+
+  <section class="filters">
+    <input id="search" type="search" placeholder="搜尋代號、公司、紀念品（7-11、全家、米、皂）" aria-label="搜尋">
+    <div class="pills" id="pills"></div>
+    <div class="selects">
+      <label>股務代理
+        <select id="agent"></select>
+      </label>
+      <label>股價門檻
+        <select id="priceCap">
+          <option value="0">不限</option>
+          <option value="15">1 股 15 元以下</option>
+          <option value="30">1 股 30 元以下</option>
+          <option value="50">1 股 50 元以下</option>
+        </select>
+      </label>
+      <label>排序
+        <select id="sort">
+          <option value="roi">首年 ROI 由高到低</option>
+          <option value="net">首年淨賺金額由高到低</option>
+          <option value="price">股價由低到高</option>
+          <option value="buy">最後買進日由近到遠</option>
+          <option value="code">代號排序</option>
+        </select>
+      </label>
+    </div>
+    <p class="count" id="count"></p>
+  </section>
+
+  <section class="grid" id="grid" aria-live="polite"></section>
+  <p class="disclaimer">本站資料僅供參考，不構成投資建議。紀念品以各公司公告為準，請於最後買進日前自行確認。</p>
+</main>
+
+<aside class="sim" id="sim" aria-label="家庭人頭矩陣與自選包試算">
+  <div class="sim-row">
+    <strong>👨‍👩‍👧‍👦 家庭戶數</strong>
+    <div class="households" id="households"></div>
+    <button id="selectAll" type="button">一鍵全選目前篩選</button>
+    <button id="clearAll" type="button" class="ghost">清空</button>
+    <button id="exportCsv" type="button" class="primary">📥 匯出 CSV 購買清單</button>
+  </div>
+  <div class="sim-stats" id="simStats"></div>
+</aside>
+<script src="./assets/app.js"></script>
+</body>
+</html>
