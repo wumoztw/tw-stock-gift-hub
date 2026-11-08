@@ -94,7 +94,8 @@ class ProjectTest(unittest.TestCase):
     def test_beginner_guide_and_business_models(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         for i in ("beginner-guide", "btn-open-guide", "tab-intro", "tab-steps", "tab-pickup", "tab-rules", "tab-business",
-                  "guide-tab", "guide-panel", "零股", "T+2", "家庭人頭矩陣", "代領", "禮券大宗收購", "Affiliate", "零股領紀念品手把手教學", "盤中零股", "補單", "議案表決"):
+                  "guide-tab", "guide-panel", "零股", "T+2", "家庭人頭矩陣", "代領", "禮券大宗收購", "Affiliate", "零股領紀念品手把手教學", "盤中零股", "補單", "議案表決",
+                  "guide-timeline-wrap", "annual-timeline", "countdown-ruler", "D-62", "D-30", "D-3", "D-Day"):
             self.assertIn(i, html)
         if shutil.which("node"):
             subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
