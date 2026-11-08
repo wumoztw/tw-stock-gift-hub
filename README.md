@@ -50,3 +50,9 @@ python3 -m unittest discover -s tests -p "test_*.py"
 - 🧭 北部可領專區 / 🚇 北車步行圈順路領 膠囊，以及「📍 北部領取生活圈篩選」下拉選單；卡片顯示股代捷運出口與開會地點標籤。
 - 📋 複製 LINE / Notion 清單：依股代分組輸出含 `[ ]` 核取方塊、股代地址的純文字檢核表。
 - 股代台北據點定義於 `assets/app.js` 的 `AGENT_LOCATIONS`。
+
+## eGift、實品圖與庫存比對
+
+- ⚡ 支援 eGift 線上領膠囊與卡片徽章：`isEGiftItem()` 依集保 eGift 企業名單與紀念品關鍵字判定。
+- 🖼️ 看實品圖：`getGiftImageSearchUrl()` 以 Google 圖片搜尋開啟紀念品實物照。
+- 💼 庫存持股比對器：貼上任意含股票代號的文字即可過濾、一鍵勾選，代號存於 `localStorage` 的 `tw_gift_portfolio_raw`。

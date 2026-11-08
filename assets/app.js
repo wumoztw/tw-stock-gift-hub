@@ -39,10 +39,22 @@ const REGION_FILTERS = {
   meeting_taipei: (g) => hasWord(g.location, TAIPEI_MEETING_WORDS),
   meeting_taohsin: (g) => hasWord(g.location, TAOHSIN_WORDS),
 };
+const EGIFT_COMPANIES = new Set(['1338', '1516', '1565', '1580', '1711', '1723', '2340', '2455', '3025', '3029', '3049',
+  '3081', '3163', '3268', '3466', '3479', '3550', '3563', '4171', '4961', '4977', '4991', '5425', '5536', '5608', '6116',
+  '6266', '6588', '8016', '8039', '8996', '2885', '2002']);
+const EGIFT_KEYWORDS = ['即享券', '即享卡', '電子抵用券', '數位商品', 'eGift'];
+const isEGiftItem = (item) => EGIFT_COMPANIES.has(String(item.code))
+  || EGIFT_KEYWORDS.some((k) => `${item.gift_2026 || ''} ${(item.history || {})['2025'] || ''}`.includes(k));
+const NO_GIFT = ['待公告', '未定', '無'];
+const hasGift = (item) => Boolean(item.gift_2026) && !NO_GIFT.includes(String(item.gift_2026).trim());
+const getGiftImageSearchUrl = (item) => 'https://www.google.com.tw/search?tbm=isch&q='
+  + encodeURIComponent(`${item.name} ${item.gift_2026} 股東會紀念品`);
+const PORTFOLIO_KEY = 'tw_gift_portfolio_raw';
+const parsePortfolio = (raw) => new Set((String(raw || '').toUpperCase().match(/\b\d{4,6}[A-Z]?\b/g) || []));
 const STORE_KEY = 'twgift.picked';
 const HH_KEY = 'twgift.households';
 const state = {
-  data: [], q: '', pill: 'flip', agent: '', region: 'all', quick: '', priceCap: 0, sort: 'roi',
+  data: [], q: '', pill: 'flip', agent: '', region: 'all', quick: '', portfolio: null, priceCap: 0, sort: 'roi',
   picked: new Set(JSON.parse(localStorage.getItem(STORE_KEY) || '[]')),
   households: Number(localStorage.getItem(HH_KEY)) || 1,
 };
@@ -75,7 +87,9 @@ function matches(g) {
     if (!TAIPEI_STATION_AGENTS.includes(g.agent)) return false;
   } else if (state.agent && g.agent !== state.agent) return false;
   if (!REGION_FILTERS[state.region](g)) return false;
-  if (state.quick && !REGION_FILTERS[state.quick](g)) return false;
+  if (state.quick === 'egift' && !isEGiftItem(g)) return false;
+  if (state.quick && state.quick !== 'egift' && !REGION_FILTERS[state.quick](g)) return false;
+  if (state.portfolio && !state.portfolio.has(String(g.code).toUpperCase())) return false;
   if (state.priceCap && !(g.price <= state.priceCap)) return false;
   if (state.q) {
     const hay = `${g.code} ${g.name} ${g.gift_2026} ${Object.values(g.history || {}).join(' ')}`.toLowerCase();
@@ -119,8 +133,9 @@ function renderPills() {
 
 function renderQuick() {
   const defs = [['north_all', '🧭 北部可領專區 (台北股代+北部開會)'], ['taipei_station', '🚇 北車步行圈順路領']];
-  $('quick-filters').innerHTML = defs.map(([id, label]) =>
-    `<button type="button" class="pill${state.quick === id ? ' active' : ''}" data-filter="${id}">${label} (${state.data.filter(REGION_FILTERS[id]).length})</button>`).join('');
+  const btn = (id, label, n) => `<button type="button" class="pill${state.quick === id ? ' active' : ''}" data-filter="${id}">${label} (${n})</button>`;
+  $('quick-filters').innerHTML = defs.map(([id, label]) => btn(id, label, state.data.filter(REGION_FILTERS[id]).length)).join('')
+    + btn('egift', '⚡ 支援 eGift 線上領', state.data.filter(isEGiftItem).length);
 }
 
 function renderAgents() {
@@ -153,6 +168,7 @@ function cardHtml(g) {
   if (isFlip(g)) badges.push(`<span class="tag profit">🔥 首年倒賺 +$${fmt(g.net_profit_yr1)} 元 (ROI ${fmt(g.roi_pct)}%)</span>`);
   if (isCard(g)) badges.push('<span class="tag card-t">💳 超商卡/禮券</span>');
   if (g.category_2026 === '民生/日用品') badges.push('<span class="tag daily">🧼 民生/日用品</span>');
+  if (isEGiftItem(g)) badges.push('<span class="tag egift" title="完成集保電子投票後，可透過集保e手掌握APP或eGift專區線上領取電子禮券條碼">⚡ eGift 線上領免跑腿</span>');
   const loc = AGENT_LOCATIONS[g.agent];
   if (loc) badges.push(`<span class="tag agent" title="${esc(loc.addr)}">🚉 ${esc(g.agent)} (${esc(loc.mrt)})</span>`);
   else if (g.agent && g.agent !== '待確認') badges.push(`<span class="tag agent">🚉 ${esc(g.agent)}</span>`);
@@ -164,7 +180,7 @@ function cardHtml(g) {
     <div class="card-top"><span class="title">${esc(g.code)} ${esc(g.name)}</span><span class="mkt">${esc(g.market)}</span>
       <input type="checkbox" data-code="${esc(g.code)}" aria-label="加入自選" ${picked ? 'checked' : ''}></div>
     <div class="badges">${badges.join('')}</div>
-    <div class="gift"><div class="name">${esc(g.gift_2026)}</div><div class="val">預估價值 ${fmt(value)} 元</div></div>
+    <div class="gift"><div class="name">${esc(g.gift_2026)}</div><div class="val">預估價值 ${fmt(value)} 元</div>${hasGift(g) ? `<a class="btn-img" href="${esc(getGiftImageSearchUrl(g))}" target="_blank" rel="noopener">🖼️ 看實品圖</a>` : ''}</div>
     <div class="metrics"><div><span>1股成本 (含$1手續費)</span>${fmt(g.cost_1_share)} 元</div><div><span>紀念品價值</span>${fmt(value)} 元</div>
       <div><span>最後買進日</span>${esc(g.last_buy_date)}</div><div><span>股東會日期</span>${esc(g.meeting_date)}（${esc(g.location)}）</div></div>
     ${parseMonthDayToDate(g.last_buy_date) ? `<div class="cal-row"><button type="button" class="btn-cal" data-cal="${esc(g.code)}">📅 加入日曆</button></div>` : ''}
@@ -339,7 +355,44 @@ function openGoogleCalendar(g) {
   window.open(url, '_blank', 'noopener');
 }
 
+function matchPortfolio() {
+  const raw = $('portfolio-input').value;
+  localStorage.setItem(PORTFOLIO_KEY, raw);
+  const codes = parsePortfolio(raw);
+  const out = $('portfolio-summary');
+  if (!codes.size) { state.portfolio = null; out.textContent = '⚠️ 未偵測到股票代號，請貼上 4~6 碼代號。'; renderGrid(); return; }
+  state.portfolio = codes;
+  const hits = state.data.filter((g) => codes.has(String(g.code).toUpperCase()));
+  const cards = hits.filter(isCard);
+  const sum = (arr) => arr.reduce((s, g) => s + (g.est_value_2026 || 0), 0);
+  out.textContent = hits.length
+    ? `🎉 比對成功！您的庫存中共有 ${hits.length} 檔發放紀念品（其中超商卡 ${cards.length} 檔共 $${fmt(sum(cards))} 元，預估總價值 $${fmt(sum(hits))} 元）`
+    : `😅 偵測到 ${codes.size} 檔代號，但今年皆無收錄的紀念品。`;
+  renderGrid();
+}
+
+function selectMatched() {
+  if (!state.portfolio) matchPortfolio();
+  state.data.filter((g) => state.portfolio && state.portfolio.has(String(g.code).toUpperCase()))
+    .forEach((g) => state.picked.add(g.code));
+  persist();
+  renderGrid();
+}
+
+function clearPortfolio() {
+  state.portfolio = null;
+  $('portfolio-input').value = '';
+  $('portfolio-summary').textContent = '';
+  localStorage.removeItem(PORTFOLIO_KEY);
+  renderGrid();
+}
+
 function bind() {
+  $('btn-match-portfolio').addEventListener('click', matchPortfolio);
+  $('btn-select-matched').addEventListener('click', selectMatched);
+  $('btn-clear-portfolio').addEventListener('click', clearPortfolio);
+  const saved = localStorage.getItem(PORTFOLIO_KEY);
+  if (saved) { $('portfolio-input').value = saved; state.portfolio = parsePortfolio(saved); if (!state.portfolio.size) state.portfolio = null; }
   $('search').addEventListener('input', (e) => { state.q = e.target.value.trim().toLowerCase(); renderGrid(); });
   $('agent').addEventListener('change', (e) => { state.agent = e.target.value; renderGrid(); });
   $('region-filter').addEventListener('change', (e) => { state.region = e.target.value; renderGrid(); });
@@ -395,5 +448,6 @@ async function init() {
   renderQuick();
   bind();
   renderGrid();
+  if (state.portfolio) matchPortfolio();
 }
 init();

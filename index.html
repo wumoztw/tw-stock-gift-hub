@@ -16,6 +16,17 @@
 <main class="container">
   <section class="kpis" id="kpis" aria-label="核心數據"></section>
 
+  <details class="portfolio" id="portfolio-matcher">
+    <summary>💼 我的庫存持股比對器（貼上股票代號，一秒算出今年能領多少紀念品！）</summary>
+    <textarea id="portfolio-input" rows="3" placeholder="請貼上您持有的股票代號（支援從券商 APP 複製的任意文字、空白、逗號或換行分隔，例如：2303, 2885, 4150, 1340, 2603）..."></textarea>
+    <div class="portfolio-actions">
+      <button id="btn-match-portfolio" type="button" class="primary">🔍 比對我的庫存紀念品</button>
+      <button id="btn-select-matched" type="button">✅ 將命中的庫存股全部勾選加入清單/日曆</button>
+      <button id="btn-clear-portfolio" type="button" class="ghost">🔄 清除比對（顯示全部）</button>
+    </div>
+    <p id="portfolio-summary" class="portfolio-summary" aria-live="polite"></p>
+  </details>
+
   <section class="filters">
     <input id="search" type="search" placeholder="搜尋代號、公司、紀念品（7-11、全家、米、皂）" aria-label="搜尋">
     <div class="pills" id="pills"></div>
