@@ -426,7 +426,19 @@ function clearPortfolio() {
   renderGrid();
 }
 
+function bindGuide() {
+  const box = $('beginner-guide');
+  const btn = $('btn-open-guide');
+  if (!box) return;
+  if (btn) btn.addEventListener('click', () => { box.open = true; box.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  document.querySelectorAll('.guide-tab').forEach((tab) => tab.addEventListener('click', () => {
+    document.querySelectorAll('.guide-tab').forEach((t) => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('.guide-panel').forEach((p) => { const on = p.id === tab.dataset.tab; p.classList.toggle('active', on); p.hidden = !on; });
+  }));
+}
+
 function bind() {
+  bindGuide();
   $('btn-match-portfolio').addEventListener('click', matchPortfolio);
   $('btn-select-matched').addEventListener('click', selectMatched);
   $('btn-clear-portfolio').addEventListener('click', clearPortfolio);

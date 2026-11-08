@@ -12,12 +12,60 @@
   <h1>🎁 台灣股東會紀念品情報站</h1>
   <p>買 1 股就能領的紀念品，算清楚成本、回本與順路領。資料每日自動更新。</p>
   <p class="updated" id="updated"></p>
+  <button type="button" id="btn-open-guide" class="btn-guide-trigger">📖 新手必看：買 1 股領紀念品全攻略 &amp; 商業變現指南</button>
   <nav class="tdcc-links" aria-label="集保股東 e 服務">
     <a href="https://stockservices.tdcc.com.tw/evote/index.html" target="_blank" rel="noopener" class="btn-tdcc-evote">🗳️ 前往集保股東 e 票通 (電子投票)</a>
     <a href="https://stockservices.tdcc.com.tw/" target="_blank" rel="noopener" class="btn-tdcc-egift">⚡ 集保 eGift 電子紀念品專區</a>
   </nav>
 </header>
 <main class="container">
+  <details id="beginner-guide" class="guide-box">
+    <summary>📖 零股換紀念品：從 0 到 1 新手全攻略 ＆ 商業變現模式說明書</summary>
+    <div class="guide-tabs" role="tablist">
+      <button type="button" class="guide-tab active" role="tab" data-tab="tab-intro">🌱 零基礎入門</button>
+      <button type="button" class="guide-tab" role="tab" data-tab="tab-steps">🛠️ 實戰五部曲</button>
+      <button type="button" class="guide-tab" role="tab" data-tab="tab-rules">⚠️ 新手避坑守則</button>
+      <button type="button" class="guide-tab" role="tab" data-tab="tab-business">💼 商業變現指南</button>
+    </div>
+    <div class="guide-panel active" id="tab-intro" role="tabpanel">
+      <h3>🌱 零基礎入門：為什麼買 1 股就能領？</h3>
+      <div class="guide-grid">
+        <div class="guide-card"><h4>核心原理解密</h4><p>許多人以為買股票要花好幾萬元買一整張（1,000 股）。其實台股開放盤中與盤後<b>「零股交易」</b>，最低只要買 <b>1 股</b>就能成為該公司的法定股東！</p></div>
+        <div class="guide-card"><h4>驚人數學帳</h4><p>以「🔥 首年直接倒賺超商卡」清單為例，<code>4150 優你康</code> 股價約 1.67 元，加上券商最低手續費 1 元，<b>買進 1 股總成本只要 2.67 元</b>，當年股東會卻發放 <b>50 元超商禮券</b>！</p></div>
+        <div class="guide-card"><h4>終身複利效應：買一次、領一輩子</h4><p>股票不像彩券會過期。只要 1 股不賣、公司每年持續發紀念品，第一年花 3 元買進倒賺 47 元回本，第 2、3 年……往後每年都是「0 成本」白領 50 元！</p></div>
+        <div class="guide-card"><h4>2026 全台黃金數據</h4><p>全台 172 檔「首年直接回本超商卡股」，各買 1 股總本金僅需 <b>4,292 元</b>，第一年就能領回 <b>8,545 元</b>超商禮券（現賺 +4,254 元），且明年起每年繼續免費領！</p></div>
+      </div>
+    </div>
+    <div class="guide-panel" id="tab-steps" role="tabpanel" hidden>
+      <h3>🛠️ 實戰五部曲：從開戶到領取 SOP</h3>
+      <div class="guide-grid">
+        <div class="guide-card"><h4>Step 1｜挑對「零股手續費最低 1 元」的券商</h4><p>傳統券商單筆最低手續費 20 元（買 500 檔光手續費就要 1 萬元，絕對虧本）。請選零股手續費最低 1 元的券商，例如國泰證券、富邦證券、永豐金（大戶投）、新光證券、元富證券、統一證券、口袋證券等。</p></div>
+        <div class="guide-card"><h4>Step 2｜對準「最後買進日（股東會前 62 天）」買 1 股</h4><p>《公司法》規定股東會前 60 天停止過戶，加上 <code>T+2</code> 交割，須在本站標示的「最後買進日」13:30 收盤前成交 1 股。老手偷吃步：篩選「👑 連 4 年必發超商卡聖杯」，每年 1～2 月提前買好，不必趕死線。</p></div>
+        <div class="guide-card"><h4>Step 3｜每年 4～5 月完成集保電子投票（e 票通）</h4><p>多數公司規定零股股東須完成電子投票或親自出席才發放。在「🗳️ 電投期間（開會前 30 日～前 3 日）」登入集保股東 e 服務或「集保 e 手掌握 APP／券商 APP」，逐家點選贊成／反對／棄權。</p></div>
+        <div class="guide-card"><h4>Step 4｜三種領取管道任選</h4><p><b>A ⚡ 集保 eGift 線上領</b>：投完電子票（切勿交付委託書）後，直接在 APP 領超商電子禮券條碼。<br><b>B 🚇 自己去股代順路領（0 代領費）</b>：用「北車步行圈順路領」篩選，帶身分證或電投截圖，一趟領回上百張。<br><b>C 🏪 民間代領處</b>：5205、零股寶等，每份約 15～30 元。</p></div>
+        <div class="guide-card"><h4>Step 5｜領完入袋，股票留著明年續領</h4><p>那 1 股不用賣！留在帳戶裡，明年 4～5 月從 Step 3 電子投票開始無限循環領取。</p></div>
+      </div>
+    </div>
+    <div class="guide-panel" id="tab-rules" role="tabpanel" hidden>
+      <h3>⚠️ 新手避坑守則：3 個絕對不能犯的錯</h3>
+      <div class="guide-grid">
+        <div class="guide-card"><h4>❌ 陷阱一：買在「最後買進日」隔天</h4><p>晚一天買進，T+2 交割來不及過戶，今年就領不到。善用底部「📅 匯出行事曆 (.ics)」設定前一天與當天早盤 09:00 鬧鐘！</p></div>
+        <div class="guide-card"><h4>❌ 陷阱二：用「最低手續費 20 元」的券商買零股</h4><p>下單前務必向營業員或券商 APP 確認已啟用「盤中／盤後零股手續費最低 1 元」優惠。</p></div>
+        <div class="guide-card"><h4>❌ 陷阱三：把折價券／購物金當成現金超商卡</h4><p>部分公司發放「滿千折百券」或「自家商城購物金」。本站已將「💳 超商卡/禮券」與「🎫 折價/購物金」分開標示，新手優先鎖定 <code>💳 超商卡/禮券</code>。</p></div>
+      </div>
+    </div>
+    <div class="guide-panel" id="tab-business" role="tabpanel" hidden>
+      <h3>💼 商業變現指南：把「領紀念品」變成副業與商業行為</h3>
+      <div class="guide-grid">
+        <div class="guide-card"><h4>模式一：👨‍👩‍👧‍👦 家庭人頭矩陣規模化</h4><p>跑一趟台北車站領 1 份與領 8 份的時間成本幾乎相同（邊際成本趨近 0）。動員全家 6～8 個證券戶，每戶約 4,300 元買齊 172 檔首年回本超商卡與 200 檔高實用日用品，合計每年穩定領取 <b>68,000～120,000 元</b>超商禮券＋8 箱日用品，首年回本後每年淨現金流破 10 萬元。</p></div>
+        <div class="guide-card"><h4>模式二：🏪 社區團購主／地方代領收單服務</h4><p>散戶與上班族沒時間排隊股代。自己本來就要去領，可在 LINE 社群、社區群組、PTT/Dcard 承接委託，每份收 <b>15～25 元代領費</b>。旺季（4～6 月）收單 3,000～5,000 份，兩個月可創造 <b>6～12 萬元</b>勞務收入。</p></div>
+        <div class="guide-card"><h4>模式三：🛒 電商與二手批發套利</h4><p>熱門紀念品（中鋼純鈦杯、聯電咖波貓聯名、王品餐飲禮包、南僑水晶肥皂、花仙子、毛寶等）需求剛性。C2C：蝦皮、Facebook 社團以市價 5～7 折零售；B2B：洗碗精、香皂、衛生紙整批轉售五金百貨、娃娃機台主、活動贈品商。</p></div>
+        <div class="guide-card"><h4>模式四：💳 禮券大宗收購與利差套利</h4><p>7-11 商品卡與全家禮物卡無使用期限、等同現金。以 88～92 折批量收購，再以 95～96 折轉售企業福委會、團購主或高頻消費者，賺取 4%～7% 利差。</p></div>
+        <div class="guide-card"><h4>模式五：🤖 數位工具、自媒體流量與自動化服務</h4><p>每年 3～6 月紀念品搜尋量暴增。經營財經自媒體／LINE 官方帳號／IG／Threads，整理「首年回本神股清單」，搭配券商低手續費開戶推廣連結（Affiliate Marketing）賺取分潤；或提供付費 LINE 最後買進日推播、代印電投確認單、多帳號自動電子投票截圖工具授權。</p></div>
+      </div>
+    </div>
+  </details>
+
   <section class="kpis" id="kpis" aria-label="核心數據"></section>
 
   <details class="portfolio" id="portfolio-matcher">
