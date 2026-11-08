@@ -175,6 +175,7 @@ function cardHtml(g) {
   if (isNorthMeeting(g)) badges.push(`<span class="tag north">📍 北部開會: ${esc(g.location)}</span>`);
   if (isNorthMeetingAndTaipeiAgent(g)) badges.push('<span class="tag north">🏛️ 北部現場也能領</span>');
   else if (isNorthPickup(g)) badges.push('<span class="tag north">🏢 北部可領</span>');
+  const ew = getEVotingWindow(g.meeting_date, g.meeting_type);
   const picked = state.picked.has(g.code);
   return `<article class="card${picked ? ' picked' : ''}">
     <div class="card-top"><span class="title">${esc(g.code)} ${esc(g.name)}</span><span class="mkt">${esc(g.market)}</span>
@@ -183,7 +184,8 @@ function cardHtml(g) {
     <div class="gift"><div class="name">${esc(g.gift_2026)}</div><div class="val">預估價值 ${fmt(value)} 元</div>${hasGift(g) ? `<a class="btn-img" href="${esc(getGiftImageSearchUrl(g))}" target="_blank" rel="noopener">🖼️ 看實品圖</a>` : ''}</div>
     <div class="metrics"><div><span>1股成本 (含$1手續費)</span>${fmt(g.cost_1_share)} 元</div><div><span>紀念品價值</span>${fmt(value)} 元</div>
       <div><span>最後買進日</span>${esc(g.last_buy_date)}</div><div><span>股東會日期</span>${esc(g.meeting_date)}（${esc(g.location)}）</div></div>
-    ${parseMonthDayToDate(g.last_buy_date) ? `<div class="cal-row"><button type="button" class="btn-cal" data-cal="${esc(g.code)}">📅 加入日曆</button></div>` : ''}
+    <div class="evote-row">🗳️ 電投期間：${ew ? esc(ew.rangeLabel) : '待公告'}</div>
+    ${parseMonthDayToDate(g.last_buy_date) || ew ? `<div class="cal-row">${parseMonthDayToDate(g.last_buy_date) ? `<button type="button" class="btn-cal" data-cal="${esc(g.code)}">📅 加入日曆</button>` : ''}${ew ? `<a class="btn-evote" href="${TDCC_EVOTE_URL}" target="_blank" rel="noopener" title="電子投票期間：${esc(ew.rangeLabel)}，投完票截圖即可去股代領紀念品或線上領 eGift！">🗳️ 去電投</a>` : ''}</div>` : ''}
     <div class="bar" title="回本進度 ${pct}%"><i class="${value >= g.cost_1_share ? '' : 'loss'}" style="width:${pct}%"></i></div>
     <div class="history">${hist}</div></article>`;
 }
@@ -237,13 +239,14 @@ function buildChecklist() {
   });
   const lines = ['🎁 【2026 股東會紀念品】北部順路領 & 零股下單檢核表',
     `📊 已選：${picks.length} 檔｜家庭戶數：${n} 戶｜總成本：$${fmt(cost)}｜首年總禮券：$${fmt(val)}｜首年淨賺：${net >= 0 ? '+' : '-'}$${fmt(Math.abs(net))}`,
+    `🗳️ 集保電子投票入口：${TDCC_EVOTE_URL}`,
     '━━━━━━━━━━━━━━━━━━'];
   [...groups.entries()].sort((a, b) => b[1].length - a[1].length).forEach(([agent, items]) => {
     const loc = AGENT_LOCATIONS[agent];
     lines.push(`📍 【${agent}】共 ${items.length} 檔${loc ? ` (${loc.mrt}｜${loc.addr})` : ''}`);
     const phone = items.find((g) => g.agent_phone);
     if (phone) lines.push(`☎ ${phone.agent_phone}`);
-    items.forEach((g) => lines.push(`[ ] ${g.code} ${g.name}｜股價 $${fmt(g.price)}｜${g.gift_2026} ($${fmt(g.est_value_2026 || 0)})｜最後買進: ${g.last_buy_date}`));
+    items.forEach((g) => lines.push(`[ ] ${g.code} ${g.name}｜股價 $${fmt(g.price)}｜${g.gift_2026} ($${fmt(g.est_value_2026 || 0)})｜最後買進: ${g.last_buy_date}${getEVotingWindow(g.meeting_date, g.meeting_type) ? `｜電投: ${getEVotingWindow(g.meeting_date, g.meeting_type).startStr}~${getEVotingWindow(g.meeting_date, g.meeting_type).endStr}` : ''}`));
     lines.push('');
   });
   return lines.join('\n').trim();
@@ -276,6 +279,22 @@ function parseMonthDayToDate(str) {
   const dt = new Date(Date.UTC(year, mo - 1, d));
   if (dt.getUTCFullYear() !== year || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
   return `${year}${String(mo).padStart(2, '0')}${String(d).padStart(2, '0')}`;
+}
+
+const TDCC_EVOTE_URL = 'https://stockservices.tdcc.com.tw/evote/index.html';
+
+function getEVotingWindow(meetingDateStr, meetingType) {
+  const ymd = parseMonthDayToDate(meetingDateStr);
+  if (!ymd) return null;
+  const base = Date.UTC(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8));
+  const days = meetingType === '臨時' ? 15 : 30;
+  const fmtD = (t) => {
+    const iso = new Date(t).toISOString().slice(0, 10);
+    return { ymd: iso.replace(/-/g, ''), md: iso.slice(5).replace('-', '/') };
+  };
+  const s = fmtD(base - days * 86400000);
+  const e = fmtD(base - 3 * 86400000);
+  return { startStr: s.md, endStr: e.md, startYmd: s.ymd, endYmd: e.ymd, rangeLabel: `${s.md} ~ ${e.md}` };
 }
 
 function nextDay(ymd) {
@@ -333,7 +352,7 @@ function buildIcs(list) {
   addEvents('last_buy_date', 'buy', (it) => summaryOf('🔔 [最後買進]', it, '股東會紀念品零股'),
     (it) => `今日為最後買進日，必買清單：\n${it.map(giftDetail).join('\n')}`);
   addEvents('meeting_date', 'meeting', (it) => summaryOf('🗳️ [股東會/電投提醒]', it, '股東會'),
-    (it) => `請於集保 e 服務完成電子投票或前往股代領取：\n${it.map(giftDetail).join('\n')}`);
+    (it) => `請於集保 e 服務完成電子投票或前往股代領取：${TDCC_EVOTE_URL}\n${it.map((g) => { const w = getEVotingWindow(g.meeting_date, g.meeting_type); return `${giftDetail(g)}${w ? ` | 電投期間: ${w.startStr}~${w.endStr}` : ''}`; }).join('\n')}`);
   lines.push('END:VCALENDAR');
   return lines.map(icsFold).join('\r\n') + '\r\n';
 }

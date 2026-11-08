@@ -60,6 +60,16 @@ class ProjectTest(unittest.TestCase):
         if shutil.which("node"):
             subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
 
+    def test_evoting_window_and_tdcc_links(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        js = (ROOT / "assets/app.js").read_text(encoding="utf-8")
+        self.assertIn("btn-tdcc-evote", html)
+        self.assertIn("stockservices.tdcc.com.tw", html)
+        for key in ["getEVotingWindow", "stockservices.tdcc.com.tw", "電投期間", "btn-evote", "電投:"]:
+            self.assertIn(key, js)
+        if shutil.which("node"):
+            subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
+
     def test_html_wiring(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("./assets/app.js", html)

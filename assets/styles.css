@@ -74,3 +74,10 @@ select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inh
 .portfolio textarea{width:100%;box-sizing:border-box;margin-top:8px;padding:8px;border:1px solid #ccc;border-radius:8px;font:inherit}
 .portfolio-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .portfolio-summary{margin:8px 0 0;font-weight:600}
+
+.tdcc-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn-tdcc-evote,.btn-tdcc-egift{display:inline-block;font-size:.85rem;padding:4px 14px;border-radius:999px;text-decoration:none;font-weight:600}
+.btn-tdcc-evote{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.btn-tdcc-egift{background:#e0f2fe;color:#075985;border:1px solid #7dd3fc}
+.evote-row{font-size:.85rem;color:#92400e;margin:4px 0}
+.btn-evote{display:inline-block;margin-left:6px;font-size:.8rem;padding:2px 10px;border-radius:999px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;text-decoration:none}

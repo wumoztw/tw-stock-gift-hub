@@ -56,3 +56,8 @@ python3 -m unittest discover -s tests -p "test_*.py"
 - ⚡ 支援 eGift 線上領膠囊與卡片徽章：`isEGiftItem()` 依集保 eGift 企業名單與紀念品關鍵字判定。
 - 🖼️ 看實品圖：`getGiftImageSearchUrl()` 以 Google 圖片搜尋開啟紀念品實物照。
 - 💼 庫存持股比對器：貼上任意含股票代號的文字即可過濾、一鍵勾選，代號存於 `localStorage` 的 `tw_gift_portfolio_raw`。
+
+## 電子投票期間與集保入口
+
+- 🗳️ `getEVotingWindow()` 依股東會日期自動推算電投期間（常會前 30 日～前 3 日；臨時會前 15 日～前 3 日），顯示於卡片並加入 `.ics` 提醒與 LINE 檢核表。
+- 頂部與卡片提供集保股東 e 服務（stockservices.tdcc.com.tw）電子投票 / eGift 直達按鈕。
