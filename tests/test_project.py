@@ -33,6 +33,13 @@ class ProjectTest(unittest.TestCase):
     def test_js_syntax(self):
         subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
 
+    def test_ics_feature(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        js = (ROOT / "assets/app.js").read_text(encoding="utf-8")
+        self.assertIn("export-ics", html)
+        for key in ["export-ics", "VCALENDAR", "VEVENT", "VALARM", "calendar.google.com", "parseMonthDayToDate"]:
+            self.assertIn(key, js)
+
     def test_html_wiring(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("./assets/app.js", html)

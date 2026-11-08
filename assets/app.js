@@ -109,6 +109,7 @@ function cardHtml(g) {
     <div class="gift"><div class="name">${esc(g.gift_2026)}</div><div class="val">預估價值 ${fmt(value)} 元</div></div>
     <div class="metrics"><div><span>1股成本 (含$1手續費)</span>${fmt(g.cost_1_share)} 元</div><div><span>紀念品價值</span>${fmt(value)} 元</div>
       <div><span>最後買進日</span>${esc(g.last_buy_date)}</div><div><span>股東會日期</span>${esc(g.meeting_date)}（${esc(g.location)}）</div></div>
+    ${parseMonthDayToDate(g.last_buy_date) ? `<div class="cal-row"><button type="button" class="btn-cal" data-cal="${esc(g.code)}">📅 加入日曆</button></div>` : ''}
     <div class="bar" title="回本進度 ${pct}%"><i class="${value >= g.cost_1_share ? '' : 'loss'}" style="width:${pct}%"></i></div>
     <div class="history">${hist}</div></article>`;
 }
@@ -148,6 +149,94 @@ function exportCsv() {
   URL.revokeObjectURL(url);
 }
 
+function parseMonthDayToDate(str) {
+  const m = /^(?:(\d{2})\/)?(\d{1,2})\/(\d{1,2})$/.exec(String(str ?? '').trim());
+  if (!m) return null;
+  const year = m[1] ? 2000 + Number(m[1]) : 2026;
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const dt = new Date(Date.UTC(year, mo - 1, d));
+  if (dt.getUTCFullYear() !== year || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return `${year}${String(mo).padStart(2, '0')}${String(d).padStart(2, '0')}`;
+}
+
+function nextDay(ymd) {
+  const dt = new Date(Date.UTC(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8) + 1));
+  return dt.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
+const icsEscape = (s) => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+
+function icsFold(line) {
+  const out = [];
+  let cur = '';
+  let bytes = 0;
+  for (const ch of line) {
+    const b = new TextEncoder().encode(ch).length;
+    if (bytes + b > 73) { out.push(cur); cur = ' '; bytes = 1; }
+    cur += ch;
+    bytes += b;
+  }
+  out.push(cur);
+  return out.join('\r\n');
+}
+
+function giftDetail(g) {
+  return `${g.code} ${g.name} | 股價 $${fmt(g.price)} | ${g.gift_2026} (價值 $${fmt(g.est_value_2026 || 0)}) | ${g.agent || '待確認'}`;
+}
+
+function groupByDate(list, field) {
+  const map = new Map();
+  list.forEach((g) => {
+    const ymd = parseMonthDayToDate(g[field]);
+    if (!ymd) return;
+    if (!map.has(ymd)) map.set(ymd, []);
+    map.get(ymd).push(g);
+  });
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function summaryOf(prefix, items, suffix) {
+  const names = items.slice(0, 2).map((g) => g.name).join('、');
+  return `${prefix} ${names} 等 ${items.length} 檔${suffix}`;
+}
+
+function buildIcs(list) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//tw-stock-gift-hub//ICS//ZH-TW', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  const addEvents = (field, kind, summary, desc) => groupByDate(list, field).forEach(([ymd, items]) => {
+    lines.push('BEGIN:VEVENT', `UID:${kind}-${ymd}@tw-stock-gift-hub`, `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${ymd}`, `DTEND;VALUE=DATE:${nextDay(ymd)}`,
+      `SUMMARY:${icsEscape(summary(items))}`, `DESCRIPTION:${icsEscape(desc(items))}`);
+    [['-PT4H', '前一天 20:00 提醒'], ['PT9H', '當天 09:00 台股開盤提醒']].forEach(([trg, text]) =>
+      lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEscape(text)}`, `TRIGGER:${trg}`, 'END:VALARM'));
+    lines.push('END:VEVENT');
+  });
+  addEvents('last_buy_date', 'buy', (it) => summaryOf('🔔 [最後買進]', it, '股東會紀念品零股'),
+    (it) => `今日為最後買進日，必買清單：\n${it.map(giftDetail).join('\n')}`);
+  addEvents('meeting_date', 'meeting', (it) => summaryOf('🗳️ [股東會/電投提醒]', it, '股東會'),
+    (it) => `請於集保 e 服務完成電子投票或前往股代領取：\n${it.map(giftDetail).join('\n')}`);
+  lines.push('END:VCALENDAR');
+  return lines.map(icsFold).join('\r\n') + '\r\n';
+}
+
+function exportIcs() {
+  const picks = state.data.filter((g) => state.picked.has(g.code));
+  const url = URL.createObjectURL(new Blob([buildIcs(picks)], { type: 'text/calendar;charset=utf-8' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'tw-stock-gifts-2026-calendar.ics' });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openGoogleCalendar(g) {
+  const ymd = parseMonthDayToDate(g.last_buy_date);
+  if (!ymd) return;
+  const text = `🔔 [最後買進] ${g.code} ${g.name} 股東會紀念品零股`;
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(text)}`
+    + `&dates=${ymd}/${nextDay(ymd)}&details=${encodeURIComponent(giftDetail(g))}`;
+  window.open(url, '_blank', 'noopener');
+}
+
 function bind() {
   $('search').addEventListener('input', (e) => { state.q = e.target.value.trim().toLowerCase(); renderGrid(); });
   $('agent').addEventListener('change', (e) => { state.agent = e.target.value; renderGrid(); });
@@ -165,6 +254,11 @@ function bind() {
     persist();
     renderSim();
   });
+  $('grid').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cal]');
+    const g = b && state.data.find((x) => x.code === b.dataset.cal);
+    if (g) openGoogleCalendar(g);
+  });
   $('households').addEventListener('click', (e) => {
     const b = e.target.closest('[data-hh]');
     if (b) { state.households = Number(b.dataset.hh); persist(); renderSim(); }
@@ -172,6 +266,7 @@ function bind() {
   $('selectAll').addEventListener('click', () => { visible().forEach((g) => state.picked.add(g.code)); persist(); renderGrid(); });
   $('clearAll').addEventListener('click', () => { state.picked.clear(); persist(); renderGrid(); });
   $('exportCsv').addEventListener('click', exportCsv);
+  $('export-ics').addEventListener('click', exportIcs);
 }
 
 async function init() {
