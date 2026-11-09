@@ -32,6 +32,8 @@ class ProjectTest(unittest.TestCase):
     def test_workflow_installs_bs4_and_script_compiles(self):
         wf = (ROOT / ".github/workflows/daily-update.yml").read_text(encoding="utf-8")
         self.assertIn("beautifulsoup4", wf)
+        self.assertIn("'0 9 * * 5'", wf)
+        self.assertIn("'0 9 * 3-5 1-4'", wf)
         subprocess.run(["python3", "-m", "py_compile", str(ROOT / "scripts/update_gifts.py")], check=True)
 
     @unittest.skipUnless(shutil.which("node"), "node 不存在")

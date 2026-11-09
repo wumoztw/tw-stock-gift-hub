@@ -1,8 +1,11 @@
-name: Daily Update
+name: Smart Seasonal Update
 
 on:
   schedule:
-    - cron: '30 0,10 * * *'   # 台灣時間 08:30 與 18:30
+    # 全年常態（淡季）：每週五台灣時間 17:00 (UTC 09:00) 更新，保持 Repo 活躍避免 60 天休眠
+    - cron: '0 9 * * 5'
+    # 旺季（3~5 月）：週一至週四 17:00 補上，加上週五即為平日每天收盤後更新
+    - cron: '0 9 * 3-5 1-4'
   workflow_dispatch:
 
 permissions:
