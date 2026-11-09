@@ -2,6 +2,8 @@ import urllib.request
 import ssl
 import json
 import re
+import sys
+from pathlib import Path
 from collections import defaultdict, Counter
 from bs4 import BeautifulSoup
 
@@ -73,128 +75,153 @@ def estimate_gift_value(gift_name: str):
 
     return ('其他紀念品', 60, gift_clean)
 
+OUT_PATH = Path('public/data/gifts.json')
+existing_list = []
+if OUT_PATH.is_file():
+    try:
+        existing_list = json.loads(OUT_PATH.read_text(encoding='utf-8'))
+    except Exception as e:
+        print(f"[WARN] 無法讀取既有 gifts.json: {e}")
+existing_by_code = {r['code']: r for r in existing_list if isinstance(r, dict) and 'code' in r}
+print(f"Loaded {len(existing_by_code)} existing records as fallback base.")
+
 # 1. Fetch official TWSE & TPEx daily close prices
 prices = {}
 market_type = {}
 company_names = {}
 
-twse_data = json.loads(fetch_text('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL'))
-for item in twse_data:
-    code = item.get('Code', '').strip()
-    close_str = item.get('ClosingPrice', '').replace(',', '').strip()
-    if code and close_str:
-        try:
-            prices[code] = float(close_str)
-            market_type[code] = '上市'
-            company_names[code] = item.get('Name', '').strip()
-        except ValueError:
-            pass
+try:
+    twse_data = json.loads(fetch_text('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL'))
+    for item in twse_data:
+        code = item.get('Code', '').strip()
+        close_str = item.get('ClosingPrice', '').replace(',', '').strip()
+        if code and close_str:
+            try:
+                prices[code] = float(close_str)
+                market_type[code] = '上市'
+                company_names[code] = item.get('Name', '').strip()
+            except ValueError:
+                pass
+except Exception as e:
+    print(f"[WARN] TWSE 收盤價抓取失敗，沿用既有價格: {e}")
 
-tpex_data = json.loads(fetch_text('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes'))
-for item in tpex_data:
-    code = item.get('SecuritiesCompanyCode', '').strip()
-    close_str = item.get('Close', '').replace(',', '').strip()
-    if code and close_str and close_str != '---':
-        try:
-            prices[code] = float(close_str)
-            market_type[code] = '上櫃'
-            company_names[code] = item.get('CompanyName', '').strip()
-        except ValueError:
-            pass
+try:
+    tpex_data = json.loads(fetch_text('https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes'))
+    for item in tpex_data:
+        code = item.get('SecuritiesCompanyCode', '').strip()
+        close_str = item.get('Close', '').replace(',', '').strip()
+        if code and close_str and close_str != '---':
+            try:
+                prices[code] = float(close_str)
+                market_type[code] = '上櫃'
+                company_names[code] = item.get('CompanyName', '').strip()
+            except ValueError:
+                pass
+except Exception as e:
+    print(f"[WARN] TPEx 收盤價抓取失敗，沿用既有價格: {e}")
 
 print(f"Loaded official prices for {len(prices)} TWSE/TPEx securities.")
 
 # 2. Fetch 2026 HiStock (with >&#< fix to get all 771 rows)
-histock_html = fetch_text('https://histock.tw/stock/gift.aspx').replace('>&#<', '>高雄<')
-soup_hi = BeautifulSoup(histock_html, 'html.parser')
 records_2026 = {}
+try:
+    histock_html = fetch_text('https://histock.tw/stock/gift.aspx').replace('>&#<', '>高雄<')
+    soup_hi = BeautifulSoup(histock_html, 'html.parser')
 
-for r in soup_hi.find_all('tr', class_=lambda c: c and 'searchrow' in c):
-    cols = [c.get_text(strip=True) for c in r.find_all('td')]
-    if len(cols) >= 11:
-        code, name, price_str, last_buy, meet_date, meet_type, loc, gift_raw, odd_lot_mail, broker, phone = cols[:11]
-        try:
-            hi_price = float(price_str.replace(',', ''))
-        except ValueError:
-            hi_price = 0.0
-        final_price = prices.get(code, hi_price)
-        cat, est_val, gift_clean = estimate_gift_value(gift_raw)
-        records_2026[code] = {
-            'code': code,
-            'name': name,
-            'market': market_type.get(code, '上市櫃/興櫃'),
-            'price': final_price,
-            'last_buy_date': last_buy,
-            'meeting_date': meet_date,
-            'meeting_type': meet_type,
-            'location': loc,
-            'gift_2026': gift_clean,
-            'category_2026': cat,
-            'est_value_2026': est_val,
-            'odd_lot_mail': odd_lot_mail,
-            'agent': normalize_agent(broker),
-            'agent_raw': broker,
-            'agent_phone': phone,
-            'history': {}
-        }
+    for r in soup_hi.find_all('tr', class_=lambda c: c and 'searchrow' in c):
+        cols = [c.get_text(strip=True) for c in r.find_all('td')]
+        if len(cols) >= 11:
+            code, name, price_str, last_buy, meet_date, meet_type, loc, gift_raw, odd_lot_mail, broker, phone = cols[:11]
+            try:
+                hi_price = float(price_str.replace(',', ''))
+            except ValueError:
+                hi_price = 0.0
+            final_price = prices.get(code, hi_price)
+            cat, est_val, gift_clean = estimate_gift_value(gift_raw)
+            records_2026[code] = {
+                'code': code,
+                'name': name,
+                'market': market_type.get(code, '上市櫃/興櫃'),
+                'price': final_price,
+                'last_buy_date': last_buy,
+                'meeting_date': meet_date,
+                'meeting_type': meet_type,
+                'location': loc,
+                'gift_2026': gift_clean,
+                'category_2026': cat,
+                'est_value_2026': est_val,
+                'odd_lot_mail': odd_lot_mail,
+                'agent': normalize_agent(broker),
+                'agent_raw': broker,
+                'agent_phone': phone,
+                'history': {}
+            }
+except Exception as e:
+    print(f"[WARN] HiStock 2026 清單抓取失敗，沿用既有紀錄: {e}")
 
 print(f"HiStock 2026 parsed: {len(records_2026)} unique companies.")
 
 # 3. Fetch Stockhouse 2026 list to fill any missing companies or upcoming meetings
-sh2026_html = fetch_text('https://www.stockhouse.com.tw/show2026list.html')
-soup_sh26 = BeautifulSoup(sh2026_html, 'html.parser')
-for tr in soup_sh26.find_all('tr')[1:]:
-    cols = [c.get_text(strip=True) for c in tr.find_all('td')]
-    if len(cols) >= 6:
-        code, name, meet_date, last_buy, gift_raw, agent_raw = cols[:6]
-        is_temp = '(臨)' in name
-        clean_name = name.replace('(臨)', '').strip()
-        cat, est_val, gift_clean = estimate_gift_value(gift_raw)
-        if code not in records_2026:
-            records_2026[code] = {
-                'code': code,
-                'name': company_names.get(code, clean_name),
-                'market': market_type.get(code, '上市櫃/興櫃'),
-                'price': prices.get(code, 0.0),
-                'last_buy_date': last_buy,
-                'meeting_date': meet_date,
-                'meeting_type': '臨時' if is_temp else '常會',
-                'location': '',
-                'gift_2026': gift_clean,
-                'category_2026': cat,
-                'est_value_2026': est_val,
-                'odd_lot_mail': '未知',
-                'agent': normalize_agent(agent_raw),
-                'agent_raw': agent_raw,
-                'agent_phone': '',
-                'history': {}
-            }
+try:
+    sh2026_html = fetch_text('https://www.stockhouse.com.tw/show2026list.html')
+    soup_sh26 = BeautifulSoup(sh2026_html, 'html.parser')
+    for tr in soup_sh26.find_all('tr')[1:]:
+        cols = [c.get_text(strip=True) for c in tr.find_all('td')]
+        if len(cols) >= 6:
+            code, name, meet_date, last_buy, gift_raw, agent_raw = cols[:6]
+            is_temp = '(臨)' in name
+            clean_name = name.replace('(臨)', '').strip()
+            cat, est_val, gift_clean = estimate_gift_value(gift_raw)
+            if code not in records_2026:
+                records_2026[code] = {
+                    'code': code,
+                    'name': company_names.get(code, clean_name),
+                    'market': market_type.get(code, '上市櫃/興櫃'),
+                    'price': prices.get(code, 0.0),
+                    'last_buy_date': last_buy,
+                    'meeting_date': meet_date,
+                    'meeting_type': '臨時' if is_temp else '常會',
+                    'location': '',
+                    'gift_2026': gift_clean,
+                    'category_2026': cat,
+                    'est_value_2026': est_val,
+                    'odd_lot_mail': '未知',
+                    'agent': normalize_agent(agent_raw),
+                    'agent_raw': agent_raw,
+                    'agent_phone': '',
+                    'history': {}
+                }
+except Exception as e:
+    print(f"[WARN] Stockhouse 2026 清單抓取失敗，沿用既有紀錄: {e}")
 
 print(f"Merged 2026 total companies: {len(records_2026)}")
 
 # 4. Fetch 2012-2025 Historical Gifts (8,523 records)
-sh_hist_html = fetch_text('https://www.stockhouse.com.tw/showallhadso.html')
-soup_hist = BeautifulSoup(sh_hist_html, 'html.parser')
 history_by_code = defaultdict(dict)
 names_by_code = {}
+try:
+    sh_hist_html = fetch_text('https://www.stockhouse.com.tw/showallhadso.html')
+    soup_hist = BeautifulSoup(sh_hist_html, 'html.parser')
 
-for tr in soup_hist.find_all('tr')[1:]:
-    cols = [c.get_text(strip=True) for c in tr.find_all('td')]
-    if len(cols) >= 4:
-        code, name, yr, gift_raw = cols[:4]
-        clean_name = name.replace('(臨)', '').strip()
-        names_by_code[code] = clean_name
-        if yr.isdigit():
-            history_by_code[code][int(yr)] = gift_raw
+    for tr in soup_hist.find_all('tr')[1:]:
+        cols = [c.get_text(strip=True) for c in tr.find_all('td')]
+        if len(cols) >= 4:
+            code, name, yr, gift_raw = cols[:4]
+            clean_name = name.replace('(臨)', '').strip()
+            names_by_code[code] = clean_name
+            if yr.isdigit():
+                history_by_code[code][int(yr)] = gift_raw
+except Exception as e:
+    print(f"[WARN] Stockhouse 歷年清單抓取失敗，沿用既有歷史: {e}")
 
 print(f"Historical database loaded for {len(history_by_code)} unique companies across 2012-2025.")
 
 # Merge history into records_2026 and also include companies that gave gifts in 2023-2025
-all_codes = set(records_2026.keys()) | {c for c, h in history_by_code.items() if any(y >= 2023 for y in h)}
+all_codes = set(records_2026.keys()) | set(existing_by_code.keys()) | {c for c, h in history_by_code.items() if any(y >= 2023 for y in h)}
 
 enriched_list = []
 for code in sorted(all_codes):
-    rec = records_2026.get(code, {
+    rec = records_2026.get(code) or (dict(existing_by_code[code]) if code in existing_by_code else {
         'code': code,
         'name': company_names.get(code, names_by_code.get(code, '')),
         'market': market_type.get(code, '上市櫃/興櫃'),
@@ -211,8 +238,15 @@ for code in sorted(all_codes):
         'agent_raw': '',
         'agent_phone': '',
     })
+    old = existing_by_code.get(code, {})
+    if not rec.get('price') and old.get('price'):
+        rec['price'] = old['price']
     hist = history_by_code.get(code, {})
-    rec['history'] = {str(y): hist[y] for y in sorted(hist.keys(), reverse=True) if y >= 2021}
+    if hist:
+        rec['history'] = {str(y): hist[y] for y in sorted(hist.keys(), reverse=True) if y >= 2021}
+    else:
+        rec['history'] = old.get('history', {})
+        hist = {int(y): g for y, g in rec['history'].items() if str(y).isdigit()}
     
     # Calculate 3-year (2023, 2024, 2025) & 4-year (+2026) card streak
     recent_years = [2026, 2025, 2024, 2023]
@@ -261,5 +295,9 @@ for r in kings_4yr_breakeven[:20]:
     h_str = f"25:{r['history'].get('2025','-')[:8]} | 24:{r['history'].get('2024','-')[:8]} | 23:{r['history'].get('2023','-')[:8]}"
     print(f"{r['code']} {r['name']} ({r['market']}) | 今價:{r['price']}元 (成本:{r['cost_1_share']}) | 2026:{r['gift_2026']} ({r['est_value_2026']}元) | 歷年:[{h_str}] | 首年ROI:{r['roi_pct']}% | 股代:{r['agent']}")
 
-with open('public/data/gifts.json', 'w', encoding='utf-8') as f:
-    json.dump(enriched_list, f, ensure_ascii=False, indent=2)
+if len(enriched_list) >= 500:
+    with open(OUT_PATH, 'w', encoding='utf-8') as f:
+        json.dump(enriched_list, f, ensure_ascii=False, indent=2)
+else:
+    print(f"[WARN] 合成筆數僅 {len(enriched_list)} (<500)，保留既有 gifts.json 不覆寫")
+sys.exit(0)

@@ -29,6 +29,11 @@ class ProjectTest(unittest.TestCase):
     def test_python_syntax(self):
         py_compile.compile(str(ROOT / "scripts/update_gifts.py"), doraise=True)
 
+    def test_workflow_installs_bs4_and_script_compiles(self):
+        wf = (ROOT / ".github/workflows/daily-update.yml").read_text(encoding="utf-8")
+        self.assertIn("beautifulsoup4", wf)
+        subprocess.run(["python3", "-m", "py_compile", str(ROOT / "scripts/update_gifts.py")], check=True)
+
     @unittest.skipUnless(shutil.which("node"), "node 不存在")
     def test_js_syntax(self):
         subprocess.run(["node", "--check", str(ROOT / "assets/app.js")], check=True)
